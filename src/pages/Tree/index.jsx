@@ -16,7 +16,7 @@ const getFetch = async (url) => {
   return data;
 };
 
-let treeData = [
+let resData = [
   {
     key: 'upload',
     title: '1',
@@ -79,7 +79,7 @@ class TreeC extends Component {
         getItem.push(item);
       });
       console.log(getItem);
-      treeData = getItem;
+      resData = getItem;
       this.setState({
         hidden: true,
       });
@@ -104,7 +104,7 @@ class TreeC extends Component {
 
     const tmpState = {
       position: 'absolute',
-      left: `${pageX - 60}px`,
+      left: `${pageX - 230}px`,
       top: `${pageY - 60}px`,
       display: this.state.display,
     };
@@ -157,18 +157,12 @@ class TreeC extends Component {
     const { hidden } = this.state;
     return hidden ? (
       <div onClick={this.DropFn}>
-        <Tree
-          style={{ 'max-height': 'none' }}
-          treeData={treeData}
-          height={233}
-          onRightClick={this.treeRightClick}
-          onClick={this.DropFn}
-        />
+        <Tree treeData={resData} onRightClick={this.treeRightClick} onClick={this.DropFn} />
         {this.getTreeRightClickMenu()}
       </div>
     ) : (
       <div>
-        <Tree />
+        <Tree treeData={resData} />
       </div>
     );
   }

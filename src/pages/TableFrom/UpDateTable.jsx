@@ -1,9 +1,8 @@
-import { useState, useRef } from 'react';
-import { ConsoleSqlOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Tag, Space, message } from 'antd';
-import ProTable, { TableDropdown, EditableProTable } from '@ant-design/pro-table';
+import { useRef } from 'react';
+import { message } from 'antd';
+import ProTable from '@ant-design/pro-table';
 import Index from './index';
-import { reject } from 'lodash';
+import './index.less';
 
 export default () => {
   const ref = useRef();
@@ -38,7 +37,7 @@ export default () => {
       tip: '标题过长会自动收缩',
       width: '40%',
       search: false,
-      sorter: (a, b) => a.time.replace(/[^0-9]/gi, '') > b.time.replace(/[^0-9]/gi, ''),
+      sorter: (a, b) => a.time.replace(/[^0-9]/gi, '') - b.time.replace(/[^0-9]/gi, ''),
       // 不允许编辑
       editable: (text, record, index) => {
         return false;
@@ -54,7 +53,7 @@ export default () => {
       },
     },
     {
-      title: '文件类型',
+      title: '文件夹',
       dataIndex: 'folder',
       search: false,
       // 不允许编辑
