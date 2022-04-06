@@ -16,6 +16,7 @@ export default {
   'pages.login.captcha.placeholder': '请输入验证码！',
   'pages.login.captcha.required': '验证码是必填项！',
   'pages.login.phoneLogin.getVerificationCode': '获取验证码',
+  'pages.login.wechatLogin.tab': '微信扫码登录',
   'pages.getCaptchaSecondText': '秒后重新获取',
   'pages.login.rememberMe': '自动登录',
   'pages.login.forgotPassword': '忘记密码 ?',

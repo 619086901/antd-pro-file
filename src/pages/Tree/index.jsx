@@ -1,20 +1,15 @@
 import { Tree } from 'antd';
 import { Component } from 'react';
 import styles from './index.less';
+import { fetchSelectLs, fetchDownload } from '../../api/index.js';
 
 function lastIndex(path) {
-  return path.lastIndexOf('\\') + 1;
+  return path.lastIndexOf(`${PATH_PARENT}`) + 1;
 }
 
 function getPath(path) {
   return path.slice(lastIndex(path), path.length);
 }
-
-const getFetch = async (url) => {
-  let res = await fetch(url);
-  let data = await res.json();
-  return data;
-};
 
 let resData = [
   {
@@ -53,36 +48,35 @@ class TreeC extends Component {
     this.fn();
   }
 
-  fn = () => {
-    getFetch(`http://localhost:9997/select_ls`).then((data) => {
-      let getItem = [];
-      data.forEach((items) => {
-        let item = new Data(items);
-        function callback(item, children) {
-          for (let value of children.values()) {
-            let h = new Data(value);
-            //是否是文件
-            if (value.type === 'file') {
-              item.children = [...item.children, h];
-            } else {
-              h.children = [];
-              item.children = [...item.children, h];
-              //文件夹
-              callback(item.children[item.children.length - 1], value.children);
-            }
+  fn = async () => {
+    const res = await fetchSelectLs();
+    const data = await res.json();
+    let getItem = [];
+    data.forEach((items) => {
+      let item = new Data(items);
+      function callback(item, children) {
+        for (let value of children.values()) {
+          let h = new Data(value);
+          //是否是文件
+          if (value.type === 'file') {
+            item.children = [...item.children, h];
+          } else {
+            h.children = [];
+            item.children = [...item.children, h];
+            //文件夹
+            callback(item.children[item.children.length - 1], value.children);
           }
         }
-        if (items.children) {
-          item.children = [];
-        }
-        callback(item, items.children);
-        getItem.push(item);
-      });
-      console.log(getItem);
-      resData = getItem;
-      this.setState({
-        hidden: true,
-      });
+      }
+      if (items.children) {
+        item.children = [];
+      }
+      callback(item, items.children);
+      getItem.push(item);
+    });
+    resData = getItem;
+    this.setState({
+      hidden: true,
     });
   };
 
@@ -124,15 +118,7 @@ class TreeC extends Component {
 
   //下载文件
   download = async (key) => {
-    const res = await fetch(`http://localhost:9997/download`, {
-      method: 'POST',
-      body: JSON.stringify({
-        name: key,
-      }),
-      headers: new Headers({
-        'Content-Type': 'application/json',
-      }),
-    });
+    const res = await fetchDownload(key);
     const data = await res.blob();
     const blobUrl = window.URL.createObjectURL(data);
     this.down(blobUrl, key.name);

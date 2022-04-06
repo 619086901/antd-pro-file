@@ -69,4 +69,9 @@ export default defineConfig({
   mfsu: {},
   webpack5: {},
   exportStatic: {},
+  define: {
+    API_SERVER_9997: 'http://106.15.206.129:9997', // 接口服务器地址
+    API_SERVER_9998: 'http://106.15.206.129:9998',
+    PATH_PARENT: '/',
+  },
 });

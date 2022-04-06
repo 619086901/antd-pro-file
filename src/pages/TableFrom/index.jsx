@@ -22,10 +22,8 @@ export default (props) => {
     });
     let data = await res.json();
     // 状态码
-    const age = data.message;
-    // 提示消息
-    let tishi = data.data.data;
-    switch (age) {
+    const { code, message: tishi } = data;
+    switch (code) {
       case 200:
         message.success(tishi);
         // 刷新
@@ -45,7 +43,7 @@ export default (props) => {
     let fileForm = new FormData();
     for (let i = 0; i < values.dragger.length; i++) {
       fileForm.append('file', values.dragger[i].originFileObj);
-      await fetch_file('http://localhost:9997/upload', fileForm);
+      await fetch_file(`${API_SERVER_9997}/upload`, fileForm);
       fileForm.delete('file');
     }
     // 重置
@@ -74,11 +72,17 @@ export default (props) => {
         >
           <ProFormUploadDragger
             max={4}
-            label="Dragger"
+            label="文件"
             name="dragger"
             //配置antd的Form参数
             fieldProps={{
               multiple: true,
+              // 通过覆盖默认的上传行为，可以自定义自己的上传实现
+              customRequest: (options) => {
+                //上传成功
+                options.onSuccess();
+                return true;
+              },
             }}
           />
         </FormComponents>

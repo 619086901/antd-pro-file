@@ -16,6 +16,18 @@ export default {
       // 依赖 origin 的功能可能需要这个，比如 cookie
       changeOrigin: true,
     },
+    wechatGet: {
+      target: 'http://106.15.206.129:9996',
+      changeOrigin: true,
+    },
+    wechatAccessToken: {
+      target: 'http://106.15.206.129:9996',
+      changeOrigin: true,
+    },
+    wechatCode: {
+      target: 'http://106.15.206.129:9996',
+      changeOrigin: true,
+    },
   },
   test: {
     '/api/': {

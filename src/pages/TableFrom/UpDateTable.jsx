@@ -3,16 +3,16 @@ import { message } from 'antd';
 import ProTable from '@ant-design/pro-table';
 import Index from './index';
 import './index.less';
+import { fetchDownload, fetchEditable, fetchSelect } from '../../api/index.js';
 
 export default () => {
   const ref = useRef();
-  // 数据
-  let filterDataSource = [];
-
   // 手动刷新
   const reload = () => {
     ref.current.reload();
   };
+  // 数据
+  let filterDataSource = [];
 
   const columns = [
     {
@@ -22,6 +22,7 @@ export default () => {
       // 在编辑表格中是否可编辑
       ellipsis: true,
       tip: '标题过长会自动收缩',
+      width: '20%',
       formItemProps: {
         rules: [
           {
@@ -35,7 +36,7 @@ export default () => {
       title: '时间',
       dataIndex: 'time',
       tip: '标题过长会自动收缩',
-      width: '40%',
+      width: '20%',
       search: false,
       sorter: (a, b) => a.time.replace(/[^0-9]/gi, '') - b.time.replace(/[^0-9]/gi, ''),
       // 不允许编辑
@@ -46,6 +47,8 @@ export default () => {
     {
       title: '文件大小',
       dataIndex: 'size',
+      tip: '标题过长会自动收缩',
+      width: '10%',
       search: false,
       // 不允许编辑
       editable: (text, record, index) => {
@@ -55,6 +58,8 @@ export default () => {
     {
       title: '文件夹',
       dataIndex: 'folder',
+      tip: '标题过长会自动收缩',
+      width: '10%',
       search: false,
       // 不允许编辑
       editable: (text, record, index) => {
@@ -64,8 +69,16 @@ export default () => {
     {
       title: '操作',
       valueType: 'option',
-      width: 100,
+      tip: '标题过长会自动收缩',
+      width: '10%',
       render: (text, record, _, action) => [
+        <a
+          onClick={() => {
+            preview(record);
+          }}
+        >
+          预览
+        </a>,
         <a
           key="editable"
           onClick={() => {
@@ -86,18 +99,15 @@ export default () => {
       ],
     },
   ];
-  // 对通过 request 获取的数据进行处理
-  const handData = (data) => {
-    return data;
+
+  // 预览
+  const preview = (data) => {
+    let { folder, leftFileName, rightFileName } = data;
+    window.open(`http://106.15.206.129:801/${folder}/${leftFileName}.${rightFileName}`);
   };
-  // 查询
-  const fetchJSON = async () => {
-    const res = await fetch('http://localhost:9997/select');
-    if (res.statusText === 'OK') {
-      return res.json();
-    } else {
-      message.error('网络异常');
-    }
+  // 对通过 request 获取的数据进行处理
+  const postData = (data) => {
+    return data;
   };
 
   const request = async (
@@ -107,7 +117,8 @@ export default () => {
     sorter,
     filter,
   ) => {
-    const json = await fetchJSON();
+    const res = await fetchSelect();
+    const json = await res.json();
     const dataSource = json.map((item, index) => {
       return {
         time: item.time,
@@ -140,28 +151,15 @@ export default () => {
   };
   // 保存一行的时候触发;
   const onSave = async (index, newItem, Item, i) => {
-    // 新名称
-    const newName = `${newItem.name}.${newItem.rightFileName}`;
-    // 旧名称
-    const name = `${Item.name}.${Item.rightFileName}`;
-    // 文件类型
-    const folder = Item.folder;
-
-    const req = await fetch('http://localhost:9997/editable', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        newName: newName,
-        name: name,
-        folder: folder,
-      }),
-    });
+    const param = {
+      newName: `${newItem.name}.${newItem.rightFileName}`, // 新名称
+      name: `${Item.name}.${Item.rightFileName}`, // 旧名称
+      folder: Item.folder, //文件类型
+    };
+    const req = await fetchEditable(param);
     const data = await req.json();
-    const age = data.message;
-    let tishi = data.data.data;
-    switch (age) {
+    const { code, message: tishi } = data;
+    switch (code) {
       case 200:
         message.success(tishi);
         break;
@@ -181,19 +179,10 @@ export default () => {
    * @param {*} key 下载文件
    */
   const download = async (key) => {
-    console.log(key);
     let item = key;
     item.name = `${key.name}.${key.rightFileName}`;
 
-    const res = await fetch(`http://localhost:9997/download`, {
-      method: 'POST',
-      body: JSON.stringify({
-        name: key,
-      }),
-      headers: new Headers({
-        'Content-Type': 'application/json',
-      }),
-    });
+    const res = await fetchDownload(key);
     const data = await res.blob();
     const blobUrl = window.URL.createObjectURL(data);
     down(blobUrl, item.name);
@@ -211,7 +200,7 @@ export default () => {
     <ProTable
       columns={columns}
       request={request}
-      postData={handData}
+      postData={postData}
       actionRef={ref}
       defaultData={filterDataSource}
       editable={{
@@ -221,7 +210,6 @@ export default () => {
         actionRender: (row, config, dom) => [dom.save, dom.cancel],
       }}
       onRequestError={() => message.error('数据加载失败')}
-      rowKey="key"
       search={{
         // 搜索表单的配置
         labelwidth: 'auto', // 标签的宽度

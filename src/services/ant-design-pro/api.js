@@ -4,24 +4,30 @@
 import { request } from 'umi';
 /** 获取当前的用户 GET /api/currentUser */
 
-export async function currentUser(options) {
-  return request('http://localhost:9998/currentUser', {
-    method: 'GET',
+export async function currentUser(accessToken, options) {
+  return request(`${API_SERVER_9998}/currentUser`, {
+    method: 'POST',
+    data: {
+      accessToken: accessToken,
+    },
     ...(options || {}),
   });
 }
 /** 退出登录接口 POST /api/login/outLogin */
 
-export async function outLogin(options) {
-  return request('http://localhost:9998/outLogin', {
+export async function outLogin(accessToken, options) {
+  return request(`${API_SERVER_9998}/outLogin`, {
     method: 'POST',
+    data: {
+      accessToken: accessToken,
+    },
     ...(options || {}),
   });
 }
 /** 登录接口 POST /api/login/account */
 
 export async function login(body, options) {
-  return request('http://localhost:9998/login', {
+  return request(`${API_SERVER_9998}/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -30,6 +36,7 @@ export async function login(body, options) {
     ...(options || {}),
   });
 }
+
 /** 此处后端没有提供注释 GET /api/notices */
 
 export async function getNotices(options) {

@@ -23,6 +23,8 @@ import { login } from '@/services/ant-design-pro/api';
 //import { getFakeCaptcha } from '@/services/ant-design-pro/login';
 import styles from './index.less';
 
+import { getAccessToken, setAccessToken } from '@/util/accessToken';
+
 const LoginMessage = ({ content }) => (
   <Alert
     style={{
@@ -33,6 +35,8 @@ const LoginMessage = ({ content }) => (
     showIcon
   />
 );
+let timer;
+let timerFoller;
 
 const Login = () => {
   const [userLoginState, setUserLoginState] = useState({});
@@ -41,37 +45,134 @@ const Login = () => {
   const intl = useIntl();
 
   const fetchUserInfo = async () => {
-    const userInfo = await initialState?.fetchUserInfo?.();
+    console.log(1);
+    const userInfo = await initialState?.fetchUserInfo?.(getAccessToken());
     console.log(userInfo);
     if (userInfo) {
       await setInitialState((s) => ({ ...s, currentUser: userInfo }));
     }
   };
 
+  const [state, setState] = useState({
+    src: '',
+  });
+
+  const WXgetAccessToken = async () => {
+    const res = await fetch('http://106.15.206.129:9996/wechatAccessToken');
+    const data = await res.json();
+    return data;
+  };
+
+  const getCode = async () => {
+    const res = await fetch('http://106.15.206.129:9996/wechatCode', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        account: '15158305800',
+        client: '123456',
+        regionCode: '101',
+      }),
+    });
+    const data = await res.json();
+    return data;
+  };
+
+  const getFoller = async () => {
+    const res = await fetch('http://106.15.206.129:9996/wechatFoller', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        account: '15158305800',
+        client: '123456',
+        regionCode: '101',
+      }),
+    });
+    const data = await res.json();
+    return data;
+  };
+
+  const func = () => {
+    getCode().then((data) => {
+      let code = data.code;
+      let ticket = data.data?.ticket;
+      switch (code) {
+        case 200:
+          setState(() => {
+            return {
+              src: `https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=${ticket}`,
+            };
+          });
+          //message.success('获取成功');
+          break;
+        case 400:
+          message.error('获取二维码失败');
+          break;
+
+        default:
+          break;
+      }
+    });
+  };
+
+  const but_timer = () => {
+    timer && clearInterval(timer);
+    timer = setInterval(() => {
+      func();
+    }, 60000);
+  };
+
   const handleSubmit = async (values) => {
     try {
-      // 登录
-      const msg = await login({ ...values, type });
+      switch (type) {
+        case 'account':
+          // 登录
+          const msg = await login({ ...values, type });
+          if (msg.code === 200) {
+            const defaultLoginSuccessMessage = intl.formatMessage({
+              id: 'pages.login.success',
+              defaultMessage: '登录成功！',
+            });
+            setAccessToken(values.username);
+            message.success(defaultLoginSuccessMessage);
+            await fetchUserInfo();
+            /** 此方法会跳转到 redirect 参数所在的位置 */
+            if (!history) return;
+            const { query } = history.location;
+            const { redirect } = query;
+            history.push(redirect || '/');
+            return;
+          }
+          console.log(msg); // 如果失败去设置用户错误信息
+          setUserLoginState(msg);
+          break;
+        case 'mobile':
+          if (true) {
+            func();
+            but_timer();
+            timerFoller && clearInterval(timerFoller);
+            timerFoller = setInterval(() => {
+              getFoller().then((data) => {
+                let follow = data.data[0]?.follow;
+                if (follow === 1) {
+                  message.success('已关注');
+                } else if (follow === 0) {
+                  message.error('未关注');
+                } else {
+                  message.error('网络异常');
+                }
+              });
+            }, 5000);
+            console.log('微信扫码');
+          }
+          break;
 
-      if (msg.code === 200) {
-        const defaultLoginSuccessMessage = intl.formatMessage({
-          id: 'pages.login.success',
-          defaultMessage: '登录成功！',
-        });
-        message.success(defaultLoginSuccessMessage);
-        await fetchUserInfo();
-        /** 此方法会跳转到 redirect 参数所在的位置 */
-
-        if (!history) return;
-        const { query } = history.location;
-        const { redirect } = query;
-        history.push(redirect || '/');
-        return;
+        default:
+          break;
       }
-
-      console.log(msg); // 如果失败去设置用户错误信息
-
-      setUserLoginState(msg);
     } catch (error) {
       const defaultLoginFailureMessage = intl.formatMessage({
         id: 'pages.login.failure',
@@ -97,16 +198,18 @@ const Login = () => {
           initialValues={{
             autoLogin: true,
           }}
-          actions={[
-            <FormattedMessage
-              key="loginWith"
-              id="pages.login.loginWith"
-              defaultMessage="其他登录方式"
-            />,
-            <AlipayCircleOutlined key="AlipayCircleOutlined" className={styles.icon} />,
-            <TaobaoCircleOutlined key="TaobaoCircleOutlined" className={styles.icon} />,
-            <WeiboCircleOutlined key="WeiboCircleOutlined" className={styles.icon} />,
-          ]}
+          actions={
+            [
+              // <FormattedMessage
+              //   key="loginWith"
+              //   id="pages.login.loginWith"
+              //   defaultMessage="其他登录方式"
+              // />,
+              // <AlipayCircleOutlined key="AlipayCircleOutlined" className={styles.icon} />,
+              // <TaobaoCircleOutlined key="TaobaoCircleOutlined" className={styles.icon} />,
+              // <WeiboCircleOutlined key="WeiboCircleOutlined" className={styles.icon} />,
+            ]
+          }
           onFinish={async (values) => {
             await handleSubmit(values);
           }}
@@ -119,13 +222,13 @@ const Login = () => {
                 defaultMessage: '账户密码登录',
               })}
             />
-            {/* <Tabs.TabPane
+            <Tabs.TabPane
               key="mobile"
               tab={intl.formatMessage({
-                id: 'pages.login.phoneLogin.tab',
-                defaultMessage: '手机号登录',
+                id: 'pages.login.wechatLogin.tab',
+                defaultMessage: '微信扫码登录',
               })}
-            /> */}
+            />
           </Tabs>
 
           {code === 400 && type === 'account' && <LoginMessage content="错误的用户名和密码" />}
@@ -175,6 +278,12 @@ const Login = () => {
                   },
                 ]}
               />
+            </>
+          )}
+
+          {type === 'mobile' && (
+            <>
+              <img src={state.src} alt="二维码加载中" />
             </>
           )}
 
@@ -276,7 +385,7 @@ const Login = () => {
                 float: 'right',
               }}
             >
-              <FormattedMessage id="pages.login.forgotPassword" defaultMessage="忘记密码" />
+              {/* <FormattedMessage id="pages.login.forgotPassword" defaultMessage="忘记密码" /> */}
             </a>
           </div>
         </LoginForm>
