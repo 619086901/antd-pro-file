@@ -1,4 +1,4 @@
-import { Tree } from 'antd';
+import { Tree, message } from 'antd';
 import { Component } from 'react';
 import styles from './index.less';
 import { fetchSelectLs, fetchDownload } from '../../api/index.js';
@@ -81,25 +81,29 @@ class TreeC extends Component {
   };
 
   treeRightClick = (e) => {
-    console.log(e);
-    this.setState({
-      display: 'block',
-      rightClickNodeTreeItem: {
-        pageX: e.event.pageX,
-        pageY: e.event.pageY,
-        folder: e.node.parent,
-        name: e.node.title,
-      },
-    });
+    this.DropFn();
+    if (e.node.parent === 'upload' || e.node.parent === 'nodeFileUpload') {
+      message.error('请选择文件下载');
+    } else {
+      this.setState({
+        display: 'block',
+        rightClickNodeTreeItem: {
+          pageX: e.event.currentTarget.offsetLeft + e.event.currentTarget.clientWidth,
+          pageY: e.event.currentTarget.offsetTop + e.event.currentTarget.clientHeight,
+          folder: e.node.parent,
+          name: e.node.title,
+        },
+      });
+    }
   };
 
   getTreeRightClickMenu = () => {
-    const { pageX, pageY, id } = { ...this.state.rightClickNodeTreeItem };
+    const { pageX, pageY } = { ...this.state.rightClickNodeTreeItem };
 
     const tmpState = {
       position: 'absolute',
-      left: `${pageX - 230}px`,
-      top: `${pageY - 60}px`,
+      left: `${pageX}px`,
+      top: `${pageY}px`,
       display: this.state.display,
     };
 
@@ -124,12 +128,11 @@ class TreeC extends Component {
     this.down(blobUrl, key.name);
   };
 
-  down = (blobUrl, key) => {
-    let a = document.createElement('a');
-    a.download = `${key}`;
+  down = (blobUrl, name) => {
+    const a = document.createElement('a');
+    a.download = `${name}`;
     a.href = blobUrl;
     a.click();
-    window.open();
   };
 
   DropFn = () => {
