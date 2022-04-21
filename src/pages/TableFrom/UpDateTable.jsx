@@ -4,6 +4,7 @@ import ProTable from '@ant-design/pro-table';
 import Index from './index';
 import './index.less';
 import { fetchDownload, fetchEditable, fetchSelect } from '../../api/index.js';
+// 数据
 
 export default () => {
   const ref = useRef();
@@ -11,13 +12,14 @@ export default () => {
   const reload = () => {
     ref.current.reload();
   };
-  // 数据
+
   let filterDataSource = [];
 
   const columns = [
     {
       title: '文件名称',
       dataIndex: 'name',
+      key: 'name',
       copyable: true,
       // 在编辑表格中是否可编辑
       ellipsis: true,
@@ -35,6 +37,7 @@ export default () => {
     {
       title: '时间',
       dataIndex: 'time',
+      key: 'time',
       tip: '标题过长会自动收缩',
       width: '20%',
       search: false,
@@ -47,6 +50,7 @@ export default () => {
     {
       title: '文件大小',
       dataIndex: 'size',
+      key: 'size',
       tip: '标题过长会自动收缩',
       width: '10%',
       search: false,
@@ -58,6 +62,19 @@ export default () => {
     {
       title: '文件夹',
       dataIndex: 'folder',
+      key: 'folder',
+      tip: '标题过长会自动收缩',
+      width: '10%',
+      search: false,
+      // 不允许编辑
+      editable: (text, record, index) => {
+        return false;
+      },
+    },
+    {
+      title: '文件类型',
+      dataIndex: 'type',
+      key: 'type',
       tip: '标题过长会自动收缩',
       width: '10%',
       search: false,
@@ -69,6 +86,7 @@ export default () => {
     {
       title: '操作',
       valueType: 'option',
+      key: 'option',
       tip: '标题过长会自动收缩',
       width: '10%',
       render: (text, record, _, action) => [
@@ -76,23 +94,24 @@ export default () => {
           onClick={() => {
             preview(record);
           }}
+          key={record.key}
         >
           预览
         </a>,
         <a
-          key="editable"
           onClick={() => {
             action?.startEditable?.(record.key);
           }}
+          key={record.key}
         >
           编辑
         </a>,
         <a
-          key="delete"
           onClick={() => {
             download(filterDataSource.find((item) => item.key == record.key));
             reload();
           }}
+          key={record.key}
         >
           下载
         </a>,
@@ -127,6 +146,7 @@ export default () => {
         folder: item.folder,
         leftFileName: item.leftFileName,
         rightFileName: item.rightFileName,
+        type: item.type,
         key: index, //给表单项设置唯一key
       };
     });
@@ -184,8 +204,15 @@ export default () => {
 
     const res = await fetchDownload(key);
     const data = await res.blob();
-    const blobUrl = window.URL.createObjectURL(data);
-    down(blobUrl, item.name);
+    switch (data.type) {
+      case 'application/json':
+        message.error('下载失败');
+        break;
+      default:
+        const blobUrl = window.URL.createObjectURL(data);
+        down(blobUrl, item.name);
+        break;
+    }
   };
 
   //流下载
@@ -195,14 +222,13 @@ export default () => {
     a.href = blobUrl;
     a.click();
   }
-
   return (
     <ProTable
       columns={columns}
       request={request}
       postData={postData}
       actionRef={ref}
-      defaultData={filterDataSource}
+      // defaultData={filterDataSource}
       editable={{
         // 可编辑表格类型单行
         type: 'single',
@@ -218,12 +244,12 @@ export default () => {
       form={{
         ignoreRules: false,
       }}
-      rowKey={(record) => record.key} // 设置item的key值
+      rowKey="key" // 设置item的key值
       pagination={{
         pageSize: 10,
       }}
       dateFormatter="string"
-      headerTitle="文件上传系统"
+      headerTitle="文件传输系统"
       toolBarRender={() => [<Index reload={reload} />]}
     />
   );
