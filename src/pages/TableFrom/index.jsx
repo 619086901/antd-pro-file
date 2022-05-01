@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button, message } from 'antd';
 import { ModalForm, ProFormUploadDragger } from '@ant-design/pro-form';
 import { PlusOutlined } from '@ant-design/icons';
+import { getAccessToken } from '../../util/accessToken.js';
 
 export default (props) => {
   const [type] = useState('ModalForm');
@@ -43,6 +44,7 @@ export default (props) => {
     let fileForm = new FormData();
     for (let i = 0; i < values.dragger.length; i++) {
       fileForm.append('file', values.dragger[i].originFileObj);
+      fileForm.append('userId', getAccessToken());
       await fetch_file(`${API_SERVER_9997}/upload`, fileForm);
       fileForm.delete('file');
     }
