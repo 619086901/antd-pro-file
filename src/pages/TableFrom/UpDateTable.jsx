@@ -84,6 +84,18 @@ export default () => {
       },
     },
     {
+      title: '上传用户',
+      dataIndex: 'userId',
+      key: 'userId',
+      tip: '标题过长会自动收缩',
+      width: '10%',
+      search: false,
+      // 不允许编辑
+      editable: (text, record, index) => {
+        return false;
+      },
+    },
+    {
       title: '操作',
       valueType: 'option',
       key: 'option',
@@ -148,6 +160,7 @@ export default () => {
         rightFileName: item.rightFileName,
         type: item.type,
         key: index, //给表单项设置唯一key
+        userId: item.userId,
       };
     });
 
